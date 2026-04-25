@@ -49,3 +49,7 @@ app.include_router(interests.router)
 @app.get("/health", tags=["Health"])
 async def health():
     return {"status": "ok"}
+
+@app.get("/")
+async def root():
+    return {"message": "Bienvenido!!!"}
