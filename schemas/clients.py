@@ -30,14 +30,27 @@ class ClientDetail(BaseModel):
     interesesId: Optional[str] = None
 
 
-# ── Shared validator ──────────────────────────────────────────────────────────
+# ── Shared validators ─────────────────────────────────────────────────────────
 
 _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+# Acepta dígitos, espacios, guiones, paréntesis y signo +. Mínimo 7 dígitos netos.
+_PHONE_RE = re.compile(r"^[\d\s\-\(\)\+]{7,20}$")
 
 
 def _validate_date(v: str, field_name: str) -> str:
     if not _DATE_RE.match(v):
         raise ValueError(f"{field_name} debe tener el formato YYYY-MM-DD.")
+    return v
+
+
+def _validate_phone(v: str, field_name: str) -> str:
+    digits = re.sub(r"\D", "", v)
+    if len(digits) < 7:
+        raise ValueError(f"{field_name} debe contener al menos 7 dígitos.")
+    if not _PHONE_RE.match(v):
+        raise ValueError(
+            f"{field_name} solo puede contener dígitos, espacios, guiones, paréntesis y '+'."
+        )
     return v
 
 
@@ -55,14 +68,34 @@ class ClientCreateRequest(BaseModel):
     identificacion: str = Field(..., max_length=20)
     telefonoCelular: str = Field(..., max_length=20)
     otroTelefono: Optional[str] = Field(default=None, max_length=20)
-    direccion: str = Field(..., max_length=200)
+    direccion: str = Field(..., min_length=5, max_length=200)
     fNacimiento: str
     fAfiliacion: str
     sexo: Literal["M", "F"]
-    resenaPersonal: str = Field(..., max_length=200)
+    resenaPersonal: str = Field(..., min_length=3, max_length=200)
     imagen: Optional[str] = None
-    interesFK: str
+    interesFK: str = Field(..., min_length=1)
     usuarioId: str
+
+    @field_validator("telefonoCelular")
+    @classmethod
+    def validate_celular(cls, v: str) -> str:
+        return _validate_phone(v, "telefonoCelular")
+
+    @field_validator("otroTelefono")
+    @classmethod
+    def validate_otro_telefono(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v.strip():
+            return _validate_phone(v, "otroTelefono")
+        return v
+
+    @field_validator("direccion", "resenaPersonal", "interesFK")
+    @classmethod
+    def strip_and_check_blank(cls, v: str, info) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError(f"{info.field_name} no puede estar vacío o contener solo espacios.")
+        return v
 
     @field_validator("fNacimiento")
     @classmethod
@@ -82,14 +115,34 @@ class ClientUpdateRequest(BaseModel):
     identificacion: str = Field(..., max_length=20)
     celular: str = Field(..., max_length=20)
     otroTelefono: Optional[str] = Field(default=None, max_length=20)
-    direccion: str = Field(..., max_length=200)
+    direccion: str = Field(..., min_length=5, max_length=200)
     fNacimiento: str
     fAfiliacion: str
     sexo: Literal["M", "F"]
-    resennaPersonal: str = Field(..., max_length=200)
+    resennaPersonal: str = Field(..., min_length=3, max_length=200)
     imagen: Optional[str] = None
-    interesFK: str
+    interesFK: str = Field(..., min_length=1)
     usuarioId: str
+
+    @field_validator("celular")
+    @classmethod
+    def validate_celular(cls, v: str) -> str:
+        return _validate_phone(v, "celular")
+
+    @field_validator("otroTelefono")
+    @classmethod
+    def validate_otro_telefono(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v.strip():
+            return _validate_phone(v, "otroTelefono")
+        return v
+
+    @field_validator("direccion", "resennaPersonal", "interesFK")
+    @classmethod
+    def strip_and_check_blank(cls, v: str, info) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError(f"{info.field_name} no puede estar vacío o contener solo espacios.")
+        return v
 
     @field_validator("fNacimiento")
     @classmethod
