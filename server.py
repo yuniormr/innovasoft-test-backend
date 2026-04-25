@@ -2,6 +2,7 @@ import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.openapi.utils import get_openapi
 from starlette.middleware.cors import CORSMiddleware
 
 from core.config import settings
@@ -53,3 +54,38 @@ async def health():
 @app.get("/")
 async def root():
     return {"message": "Bienvenido!!!"}
+
+
+# ── OpenAPI con Bearer auth ───────────────────────────────────────────────────
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+
+    schema["components"]["securitySchemes"] = {
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+        }
+    }
+
+    # Aplica el esquema a todos los endpoints excepto login, register y health
+    public_paths = {"/api/Authenticate/login", "/api/Authenticate/register", "/health", "/"}
+    for path, methods in schema.get("paths", {}).items():
+        if path in public_paths:
+            continue
+        for method in methods.values():
+            method.setdefault("security", [{"BearerAuth": []}])
+
+    app.openapi_schema = schema
+    return app.openapi_schema
+
+
+app.openapi = custom_openapi  # type: ignore[method-assign]
