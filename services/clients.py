@@ -46,14 +46,14 @@ async def audit(
 # ── Operaciones de negocio ────────────────────────────────────────────────────
 
 async def list_clients(
-    payload: ClientListRequest,
+    filters: ClientListRequest,
     token: str,
     http: httpx.AsyncClient,
 ) -> list[ClientListItem]:
     response = await proxy_request(
         http.post(
             "/api/Cliente/Listado",
-            json=payload.model_dump(exclude_none=True),
+            json=filters.model_dump(exclude_none=True),
             headers={"Authorization": f"Bearer {token}"},
         )
     )
@@ -107,20 +107,23 @@ async def create_client(
 
 
 async def update_client(
+    client_id: str,
     payload: ClientUpdateRequest,
     token: str,
     http: httpx.AsyncClient,
     db: AsyncIOMotorDatabase,
 ) -> ClientMutationResponse:
     username = await get_username_from_token(token, db)
+    body = payload.model_dump(exclude_none=True)
+    body["id"] = client_id  # la API externa espera el id en el body
     response = await proxy_request(
         http.post(
             "/api/Cliente/Actualizar",
-            json=payload.model_dump(exclude_none=True),
+            json=body,
             headers={"Authorization": f"Bearer {token}"},
         )
     )
-    await audit(db, "ACTUALIZAR", username, payload.id, response.status_code)
+    await audit(db, "ACTUALIZAR", username, client_id, response.status_code)
 
     if response.status_code != 200:
         raise HTTPException(

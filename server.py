@@ -84,7 +84,7 @@ def custom_openapi():
     }
 
     # Aplica el esquema a todos los endpoints excepto login, register y health
-    public_paths = {"/api/Authenticate/login", "/api/Authenticate/register", "/health", "/"}
+    public_paths = {"/api/auth/login", "/api/auth/register", "/health", "/"}
     for path, methods in schema.get("paths", {}).items():
         if path in public_paths:
             continue

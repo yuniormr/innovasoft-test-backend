@@ -4,7 +4,7 @@ import services.auth as auth_service
 from core.dependencies import HttpClient, Database, BearerToken
 from schemas.auth import LoginRequest, RegisterRequest, LoginResponse, RegisterResponse
 
-router = APIRouter(prefix="/api/Authenticate", tags=["Auth"])
+router = APIRouter(prefix="/api/auth", tags=["Auth"])
 
 
 @router.post("/login", response_model=LoginResponse)
@@ -12,7 +12,7 @@ async def login(payload: LoginRequest, http: HttpClient, db: Database):
     return await auth_service.login(payload, http, db)
 
 
-@router.post("/register", response_model=RegisterResponse)
+@router.post("/register", response_model=RegisterResponse, status_code=201)
 async def register(payload: RegisterRequest, http: HttpClient):
     return await auth_service.register(payload, http)
 

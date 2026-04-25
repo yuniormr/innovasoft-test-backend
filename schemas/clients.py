@@ -75,6 +75,7 @@ def _validate_identificacion(v: str) -> str:
 # ── Create / Update payloads ──────────────────────────────────────────────────
 
 class ClientListRequest(BaseModel):
+    """Query params para GET /api/clients"""
     identificacion: Optional[str] = None
     nombre: Optional[str] = None
     usuarioId: str
@@ -137,7 +138,6 @@ class ClientCreateRequest(BaseModel):
 
 
 class ClientUpdateRequest(BaseModel):
-    id: str
     nombre: str = Field(..., min_length=2, max_length=50)
     apellidos: str = Field(..., min_length=2, max_length=100)
     identificacion: str = Field(..., min_length=5, max_length=20)
