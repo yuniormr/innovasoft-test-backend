@@ -84,13 +84,13 @@ class ClientCreateRequest(BaseModel):
     nombre: str = Field(..., min_length=2, max_length=50)
     apellidos: str = Field(..., min_length=2, max_length=100)
     identificacion: str = Field(..., min_length=5, max_length=20)
-    telefonoCelular: str = Field(..., max_length=20)
+    celular: str = Field(..., max_length=20)
     otroTelefono: Optional[str] = Field(default=None, max_length=20)
     direccion: str = Field(..., min_length=5, max_length=200)
     fNacimiento: str
     fAfiliacion: str
     sexo: Literal["M", "F"]
-    resenaPersonal: str = Field(..., min_length=3, max_length=200)
+    resennaPersonal: str = Field(..., min_length=3, max_length=200)
     imagen: Optional[str] = None
     interesFK: str = Field(..., min_length=1)
     usuarioId: str
@@ -105,7 +105,7 @@ class ClientCreateRequest(BaseModel):
     def validate_identificacion_create(cls, v: str) -> str:
         return _validate_identificacion(v)
 
-    @field_validator("telefonoCelular")
+    @field_validator("celular")
     @classmethod
     def validate_celular(cls, v: str) -> str:
         return _validate_phone(v)
@@ -117,7 +117,7 @@ class ClientCreateRequest(BaseModel):
             return _validate_phone(v)
         return v
 
-    @field_validator("direccion", "resenaPersonal", "interesFK")
+    @field_validator("direccion", "resennaPersonal", "interesFK")
     @classmethod
     def strip_and_check_blank(cls, v: str, info) -> str:
         v = v.strip()
