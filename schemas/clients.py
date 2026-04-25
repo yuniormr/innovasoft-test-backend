@@ -35,6 +35,10 @@ class ClientDetail(BaseModel):
 _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 # Acepta dígitos, espacios, guiones, paréntesis y signo +. Mínimo 7 dígitos netos.
 _PHONE_RE = re.compile(r"^[\d\s\-\(\)\+]{7,20}$")
+# Letras (incluye tildes, ñ), espacios y guion. Sin dígitos ni símbolos.
+_NOMBRE_RE = re.compile(r"^[A-Za-záéíóúÁÉÍÓÚüÜñÑ\s\-]+$")
+# Alfanumérico y guion (cédula, DIMEX, pasaporte). Sin espacios.
+_IDENTIFICACION_RE = re.compile(r"^[A-Za-z0-9\-]{5,20}$")
 
 
 def _validate_date(v: str, field_name: str) -> str:
@@ -54,6 +58,24 @@ def _validate_phone(v: str, field_name: str) -> str:
     return v
 
 
+def _validate_name(v: str, field_name: str) -> str:
+    v = v.strip()
+    if len(v) < 2:
+        raise ValueError(f"{field_name} debe tener al menos 2 caracteres.")
+    if not _NOMBRE_RE.match(v):
+        raise ValueError(f"{field_name} solo puede contener letras, espacios y guiones.")
+    return v
+
+
+def _validate_identificacion(v: str) -> str:
+    v = v.strip()
+    if not _IDENTIFICACION_RE.match(v):
+        raise ValueError(
+            "identificacion debe tener entre 5 y 20 caracteres alfanuméricos o guiones, sin espacios."
+        )
+    return v
+
+
 # ── Create / Update payloads ──────────────────────────────────────────────────
 
 class ClientListRequest(BaseModel):
@@ -63,9 +85,9 @@ class ClientListRequest(BaseModel):
 
 
 class ClientCreateRequest(BaseModel):
-    nombre: str = Field(..., max_length=50)
-    apellidos: str = Field(..., max_length=100)
-    identificacion: str = Field(..., max_length=20)
+    nombre: str = Field(..., min_length=2, max_length=50)
+    apellidos: str = Field(..., min_length=2, max_length=100)
+    identificacion: str = Field(..., min_length=5, max_length=20)
     telefonoCelular: str = Field(..., max_length=20)
     otroTelefono: Optional[str] = Field(default=None, max_length=20)
     direccion: str = Field(..., min_length=5, max_length=200)
@@ -76,6 +98,16 @@ class ClientCreateRequest(BaseModel):
     imagen: Optional[str] = None
     interesFK: str = Field(..., min_length=1)
     usuarioId: str
+
+    @field_validator("nombre", "apellidos")
+    @classmethod
+    def validate_nombre_apellidos_create(cls, v: str, info) -> str:
+        return _validate_name(v, info.field_name)
+
+    @field_validator("identificacion")
+    @classmethod
+    def validate_identificacion_create(cls, v: str) -> str:
+        return _validate_identificacion(v)
 
     @field_validator("telefonoCelular")
     @classmethod
@@ -110,9 +142,9 @@ class ClientCreateRequest(BaseModel):
 
 class ClientUpdateRequest(BaseModel):
     id: str
-    nombre: str = Field(..., max_length=50)
-    apellidos: str = Field(..., max_length=100)
-    identificacion: str = Field(..., max_length=20)
+    nombre: str = Field(..., min_length=2, max_length=50)
+    apellidos: str = Field(..., min_length=2, max_length=100)
+    identificacion: str = Field(..., min_length=5, max_length=20)
     celular: str = Field(..., max_length=20)
     otroTelefono: Optional[str] = Field(default=None, max_length=20)
     direccion: str = Field(..., min_length=5, max_length=200)
@@ -123,6 +155,16 @@ class ClientUpdateRequest(BaseModel):
     imagen: Optional[str] = None
     interesFK: str = Field(..., min_length=1)
     usuarioId: str
+
+    @field_validator("nombre", "apellidos")
+    @classmethod
+    def validate_nombre_apellidos_update(cls, v: str, info) -> str:
+        return _validate_name(v, info.field_name)
+
+    @field_validator("identificacion")
+    @classmethod
+    def validate_identificacion_update(cls, v: str) -> str:
+        return _validate_identificacion(v)
 
     @field_validator("celular")
     @classmethod
