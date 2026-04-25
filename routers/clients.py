@@ -99,16 +99,16 @@ async def create_client(payload: ClientCreateRequest, token: str = Depends(_bear
         logger.exception("Error creando cliente")
         raise HTTPException(status_code=502, detail="Error al conectar con el servidor externo.")
 
+    result_data = response.json() if response.content else {}
+    cliente_id = str(result_data.get("id", "unknown"))
+    await _audit(db, "CREAR", username, cliente_id, response.status_code)
+
     if response.status_code != 200:
         raise HTTPException(
             status_code=response.status_code,
-            detail=response.json() if response.content else "Error al crear el cliente.",
+            detail=result_data if response.content else "Error al crear el cliente.",
         )
 
-    result_data = response.json() if response.content else {}
-    cliente_id = str(result_data.get("id", "unknown"))
-
-    await _audit(db, "CREAR", username, cliente_id, response.status_code)
     return {"message": "Cliente creado correctamente.", "data": result_data}
 
 
@@ -128,13 +128,14 @@ async def update_client(payload: ClientUpdateRequest, token: str = Depends(_bear
         logger.exception("Error actualizando cliente %s", payload.id)
         raise HTTPException(status_code=502, detail="Error al conectar con el servidor externo.")
 
+    await _audit(db, "ACTUALIZAR", username, payload.id, response.status_code)
+
     if response.status_code != 200:
         raise HTTPException(
             status_code=response.status_code,
             detail=response.json() if response.content else "Error al actualizar el cliente.",
         )
 
-    await _audit(db, "ACTUALIZAR", username, payload.id, response.status_code)
     return {"message": "Cliente actualizado correctamente."}
 
 
@@ -153,11 +154,12 @@ async def delete_client(client_id: str, token: str = Depends(_bearer_header)):
         logger.exception("Error eliminando cliente %s", client_id)
         raise HTTPException(status_code=502, detail="Error al conectar con el servidor externo.")
 
+    await _audit(db, "ELIMINAR", username, client_id, response.status_code)
+
     if response.status_code != 200:
         raise HTTPException(
             status_code=response.status_code,
             detail="Error al eliminar el cliente.",
         )
 
-    await _audit(db, "ELIMINAR", username, client_id, response.status_code)
     return {"message": "Cliente eliminado correctamente."}

@@ -1,5 +1,6 @@
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, Field, field_validator
+from typing import Optional, Literal
+import re
 
 
 # ── Client list item (returned by Listado) ────────────────────────────────────
@@ -29,6 +30,17 @@ class ClientDetail(BaseModel):
     interesesId: Optional[str] = None
 
 
+# ── Shared validator ──────────────────────────────────────────────────────────
+
+_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def _validate_date(v: str, field_name: str) -> str:
+    if not _DATE_RE.match(v):
+        raise ValueError(f"{field_name} debe tener el formato YYYY-MM-DD.")
+    return v
+
+
 # ── Create / Update payloads ──────────────────────────────────────────────────
 
 class ClientListRequest(BaseModel):
@@ -38,36 +50,56 @@ class ClientListRequest(BaseModel):
 
 
 class ClientCreateRequest(BaseModel):
-    nombre: str
-    apellidos: str
-    identificacion: str
-    telefonoCelular: str
-    otroTelefono: Optional[str] = None
-    direccion: str
-    fNacimiento: str          # "YYYY-MM-DD"
-    fAfiliacion: str          # "YYYY-MM-DD"
-    sexo: str                 # "M" | "F"
-    resenaPersonal: str
+    nombre: str = Field(..., max_length=50)
+    apellidos: str = Field(..., max_length=100)
+    identificacion: str = Field(..., max_length=20)
+    telefonoCelular: str = Field(..., max_length=20)
+    otroTelefono: Optional[str] = Field(default=None, max_length=20)
+    direccion: str = Field(..., max_length=200)
+    fNacimiento: str
+    fAfiliacion: str
+    sexo: Literal["M", "F"]
+    resenaPersonal: str = Field(..., max_length=200)
     imagen: Optional[str] = None
     interesFK: str
     usuarioId: str
+
+    @field_validator("fNacimiento")
+    @classmethod
+    def validate_nacimiento(cls, v: str) -> str:
+        return _validate_date(v, "fNacimiento")
+
+    @field_validator("fAfiliacion")
+    @classmethod
+    def validate_afiliacion(cls, v: str) -> str:
+        return _validate_date(v, "fAfiliacion")
 
 
 class ClientUpdateRequest(BaseModel):
     id: str
-    nombre: str
-    apellidos: str
-    identificacion: str
-    celular: str
-    otroTelefono: Optional[str] = None
-    direccion: str
+    nombre: str = Field(..., max_length=50)
+    apellidos: str = Field(..., max_length=100)
+    identificacion: str = Field(..., max_length=20)
+    celular: str = Field(..., max_length=20)
+    otroTelefono: Optional[str] = Field(default=None, max_length=20)
+    direccion: str = Field(..., max_length=200)
     fNacimiento: str
     fAfiliacion: str
-    sexo: str
-    resennaPersonal: str
+    sexo: Literal["M", "F"]
+    resennaPersonal: str = Field(..., max_length=200)
     imagen: Optional[str] = None
     interesFK: str
     usuarioId: str
+
+    @field_validator("fNacimiento")
+    @classmethod
+    def validate_nacimiento(cls, v: str) -> str:
+        return _validate_date(v, "fNacimiento")
+
+    @field_validator("fAfiliacion")
+    @classmethod
+    def validate_afiliacion(cls, v: str) -> str:
+        return _validate_date(v, "fAfiliacion")
 
 
 # ── Interest ──────────────────────────────────────────────────────────────────
