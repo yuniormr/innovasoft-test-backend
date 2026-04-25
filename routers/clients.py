@@ -43,12 +43,12 @@ async def delete_client(client_id: str, token: BearerToken, http: HttpClient, db
     return await clients_service.create_client(payload, token, http, db)
 
 
-@router.post("/Actualizar", response_model=ClientMutationResponse)
-async def update_client(payload: ClientUpdateRequest, token: BearerToken, http: HttpClient, db: Database):
-    return await clients_service.update_client(payload, token, http, db)
+# @router.post("/Actualizar", response_model=ClientMutationResponse)
+# async def update_client(payload: ClientUpdateRequest, token: BearerToken, http: HttpClient, db: Database):
+#     return await clients_service.update_client(payload, token, http, db)
 
 
-@router.delete("/Eliminar/{client_id}", response_model=ClientMutationResponse)
-async def delete_client(client_id: str, token: BearerToken, http: HttpClient, db: Database):
-    return await clients_service.delete_client(client_id, token, http, db)
+# @router.delete("/Eliminar/{client_id}", response_model=ClientMutationResponse)
+# async def delete_client(client_id: str, token: BearerToken, http: HttpClient, db: Database):
+#     return await clients_service.delete_client(client_id, token, http, db)
 
