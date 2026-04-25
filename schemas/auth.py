@@ -1,12 +1,12 @@
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 import re
 
 
-# ── Request schemas ───────────────────────────────────────────────────────────
+# ── Request schemas ─────────────────────────────────────────────
 
 class LoginRequest(BaseModel):
-    username: str
-    password: str
+    username: str = Field(min_length=3, max_length=50)
+    password: str = Field(min_length=1, max_length=100)
 
 
 class RegisterRequest(BaseModel):

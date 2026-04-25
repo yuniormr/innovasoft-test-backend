@@ -198,3 +198,8 @@ class ClientUpdateRequest(BaseModel):
 class Interest(BaseModel):
     id: str
     descripcion: str
+
+
+class ClientMutationResponse(BaseModel):
+    message: str
+    data: dict | None = None

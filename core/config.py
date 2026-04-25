@@ -1,20 +1,23 @@
 from pathlib import Path
-from dotenv import load_dotenv
-import os
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ROOT_DIR = Path(__file__).parent.parent
-load_dotenv(ROOT_DIR / ".env")
 
 
-class Settings:
-    MONGO_URL: str = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
-    DB_NAME: str = os.environ.get("DB_NAME", "clients")
-    INNOVASOFT_API_BASE: str = os.environ.get(
-        "INNOVASOFT_API_BASE", "https://pruebareactjs.test-class.com/Api"
+class Settings(BaseSettings):
+    MONGO_URL: str = "mongodb://localhost:27017"
+    DB_NAME: str = "clients"
+    INNOVASOFT_API_BASE: str = "https://pruebareactjs.test-class.com/Api"
+    # Comma-separated en .env: "http://localhost:3000,http://localhost:5173"
+    CORS_ORIGINS: str = "http://localhost:3000"
+
+    model_config = SettingsConfigDict(
+        env_file=str(ROOT_DIR / ".env"),
+        env_file_encoding="utf-8",
     )
-    CORS_ORIGINS: list[str] = os.environ.get(
-        "CORS_ORIGINS", "http://localhost:3000"
-    ).split(",")
+
+    def cors_origins_list(self) -> list[str]:
+        return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
 
 
 settings = Settings()

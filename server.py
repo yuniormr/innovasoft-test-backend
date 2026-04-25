@@ -1,13 +1,13 @@
 import logging
 from contextlib import asynccontextmanager
 
+import httpx
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
+from motor.motor_asyncio import AsyncIOMotorClient
 from starlette.middleware.cors import CORSMiddleware
 
 from core.config import settings
-from core.database import close_mongo_client
-from core.httpx_client import close_http_client
 from routers import auth, clients, interests
 
 # ── Logging ───────────────────────────────────────────────────────────────────
@@ -20,9 +20,16 @@ logging.basicConfig(
 # ── Lifespan (startup / shutdown) ─────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    app.state.http_client = httpx.AsyncClient(
+        base_url=settings.INNOVASOFT_API_BASE,
+        timeout=30.0,
+        follow_redirects=True,
+    )
+    app.state.mongo_client = AsyncIOMotorClient(settings.MONGO_URL)
+    app.state.db = app.state.mongo_client[settings.DB_NAME]
     yield
-    await close_http_client()
-    close_mongo_client()
+    await app.state.http_client.aclose()
+    app.state.mongo_client.close()
 
 
 # ── App factory ───────────────────────────────────────────────────────────────
@@ -35,7 +42,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=settings.cors_origins_list(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -1,22 +1,7 @@
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
-from core.config import settings
+# La inicialización del cliente MongoDB se realiza en server.py (lifespan).
+# Las dependencias inyectables se encuentran en core/dependencies.py.
+#
+# Este módulo se mantiene por compatibilidad de importaciones existentes.
+from core.dependencies import get_db
 
-_client: AsyncIOMotorClient | None = None
-
-
-def get_mongo_client() -> AsyncIOMotorClient:
-    global _client
-    if _client is None:
-        _client = AsyncIOMotorClient(settings.MONGO_URL)
-    return _client
-
-
-def get_db() -> AsyncIOMotorDatabase:
-    return get_mongo_client()[settings.DB_NAME]
-
-
-def close_mongo_client() -> None:
-    global _client
-    if _client is not None:
-        _client.close()
-        _client = None
+__all__ = ["get_db"]
